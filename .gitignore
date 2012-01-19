@@ -1,0 +1,6 @@
+ebin/*.beam
+deps/
+tests/
+log/
+erl_crash.dump
+ecache_app

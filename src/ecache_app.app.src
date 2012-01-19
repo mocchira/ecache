@@ -1,0 +1,11 @@
+{application, ecache_app,
+[
+	{description, "Cache Library"},
+	{vsn, "0.0.1"},
+        {id, "ecache_app"},
+	{modules, []},
+	{registered, []},
+	{env, []},
+	{mod, {ecache_app, [{rec_max_size, 1000000}]}},
+	{applications, [kernel, stdlib]}
+]}.
