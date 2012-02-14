@@ -59,7 +59,14 @@ get_server_ids(ProcNum) ->
               end, lists:seq(0, ProcNum-1)).
 
 get_server_id(Index) when is_integer(Index) andalso Index >= 0 ->
-	list_to_atom(?SERVER_NAME_PREFIX ++ string:right(integer_to_list(Index), 2, $0));
+	case erlang:get(Index) of
+		undefined ->
+			NewId = list_to_atom(?SERVER_NAME_PREFIX ++ string:right(integer_to_list(Index), 2, $0)),
+			erlang:put(Index, NewId),
+			NewId;
+		Id ->
+			Id
+	end;
 
 get_server_id(Key) when is_binary(Key) ->
 	Props  = supervisor:count_children(?MODULE),
