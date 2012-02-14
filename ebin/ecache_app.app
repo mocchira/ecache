@@ -5,5 +5,5 @@
               {modules,[ecache_app,ecache_server,ecache_sup]},
               {registered,[]},
               {env,[]},
-              {mod,{ecache_app,[{rec_max_size,1000000}]}},
+              {mod,{ecache_app,[{rec_max_size,1000000000},{proc_num,4}]}},
               {applications,[kernel,stdlib]}]}.
