@@ -30,7 +30,7 @@ start_link(Options) ->
                         % ok, no error found in options
                         ProcNum = proplists:get_value(proc_num    , OptionsVerified),
                         MaxSize = round(proplists:get_value(rec_max_size, OptionsVerified) / ProcNum),
-    			supervisor:start_link({local, ?MODULE}, ?MODULE, [ProcNum, MaxSize]);
+    			        supervisor:start_link({local, ?MODULE}, ?MODULE, [ProcNum, MaxSize]);
                 Reason ->
                         % error found in options
                         {error, Reason}
@@ -59,28 +59,31 @@ get_server_ids(ProcNum) ->
               end, lists:seq(0, ProcNum-1)).
 
 get_server_id(Index) when is_integer(Index) andalso Index >= 0 ->
-	case erlang:get(Index) of
-		undefined ->
-			NewId = list_to_atom(?SERVER_NAME_PREFIX ++ string:right(integer_to_list(Index), 2, $0)),
-			erlang:put(Index, NewId),
-			NewId;
-		Id ->
-			Id
-	end;
+    list_to_atom(?SERVER_NAME_PREFIX ++ string:right(integer_to_list(Index), 3, $0));
+%	case erlang:get(Index) of
+%		undefined ->
+%			NewId = list_to_atom(?SERVER_NAME_PREFIX ++ string:right(integer_to_list(Index), 3, $0)),
+%			erlang:put(Index, NewId),
+%			NewId;
+%		Id ->
+%			Id
+%	end;
 
-get_server_id(Key) when is_binary(Key) ->
+%get_server_id(Key) when is_binary(Key) ->
+get_server_id(Key) ->
 	Props  = supervisor:count_children(?MODULE),
 	Active = proplists:get_value(active, Props),
 	Index = erlang:phash2(Key, Active),
-	get_server_id(Index);
+	%Index = erlang:phash2(Key, 128),
+	get_server_id(Index).
 
-get_server_id(Key) when is_list(Key) ->
-	Bin = list_to_binary(Key),
-	get_server_id(Bin);
+%get_server_id(Key) when is_list(Key) ->
+%	Bin = list_to_binary(Key),
+%	get_server_id(Bin);
 
-get_server_id(Key) when is_atom(Key) ->
-	Bin = atom_to_binary(Key, latin1),
-	get_server_id(Bin).
+%get_server_id(Key) when is_atom(Key) ->
+%	Bin = atom_to_binary(Key, latin1),
+%	get_server_id(Bin).
 %% ---------------------------------------------------------------------
 %% Callbacks
 %% ---------------------------------------------------------------------
@@ -94,7 +97,6 @@ init([ProcNum|Args]) ->
 			{Id, {ecache_server, start_link, [Id, Args]},
 			permanent, brutal_kill, worker, [ecache_server]}
 		end, get_server_ids(ProcNum)),
-	io:format("proc:~p~n", [ProcNum]),
 	{ok, {_SupFlags = {one_for_one, ?MAX_RESTART, ?MAX_TIME}, RegisteredProcs}}.
 
 % ============================ INTERNAL FUNCTIONS ==============================
