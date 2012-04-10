@@ -19,7 +19,8 @@
 	rec_max_size	= 0 :: integer(),
 	stats_get_op	= 0 :: integer(),
 	stats_set_op	= 0 :: integer(),
-	stats_del_op	= 0 :: integer()
+	stats_del_op	= 0 :: integer(),
+	stats_hit       = 0 :: integer()
 %	stats_rec_num	= 0 :: integer(),
 %	stats_rec_size	= 0 :: integer()
 }).
@@ -28,6 +29,7 @@
 	get_op	 = 0 :: integer(),
 	set_op	 = 0 :: integer(),
 	del_op	 = 0 :: integer(),
+	hit_cnt	 = 0 :: integer(),
 	rec_num	 = 0 :: integer(),
 	rec_size = 0 :: integer()
 }).
@@ -83,6 +85,7 @@ stats() ->
 				get_op = GetOp,
 				set_op = SetOp,
 				del_op = DelOp,
+				hit_cnt = HitCount,
 				rec_num = RecNum,
 				rec_size = RecSize}) ->
 			NewStats = stats(Id),
@@ -90,6 +93,7 @@ stats() ->
 				get_op = GetOp + NewStats#stats.get_op,
 				set_op = SetOp + NewStats#stats.set_op,
 				del_op = DelOp + NewStats#stats.del_op,
+				hit_cnt = HitCount + NewStats#stats.hit_cnt,
 				rec_num = RecNum + NewStats#stats.rec_num,
 				rec_size = RecSize + NewStats#stats.rec_size}
 		end, #stats{}, ecache_sup:get_server_ids()).
@@ -103,14 +107,14 @@ init([MaxSize|_T]) ->
 	}}.
 
 % handle_call generic fallback
-handle_call({get, Key}, _From, State=#state{cherly = Cherly, stats_get_op = GetOp}) ->
+handle_call({get, Key}, _From, State=#state{cherly = Cherly, stats_get_op = GetOp, stats_hit = HitCount}) ->
 	NewGetOp = GetOp + 1,
 	Val = cherly:get(Cherly, Key),
 	case Val of
 		none ->
 			{reply, undefined, State#state{stats_get_op = NewGetOp}};
 		_Exist ->
-			{reply, Val, State#state{stats_get_op = NewGetOp}}
+			{reply, Val, State#state{stats_get_op = NewGetOp, stats_hit = HitCount + 1}}
 	end;
 
 % handle_call generic fallback
@@ -130,10 +134,12 @@ handle_call({delete, Key}, _From,
 % handle_call generic fallback
 handle_call(stats, _From, State=#state{
 		cherly = Cherly,
+		stats_hit = HitCount,
 		stats_get_op = GetOp,
 		stats_set_op = SetOp, 
 		stats_del_op = DelOp}) ->
 	Stats = #stats{
+		hit_cnt = HitCount,
 		get_op = GetOp,
 		set_op = SetOp,
 		del_op = DelOp,
