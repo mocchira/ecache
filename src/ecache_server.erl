@@ -2,17 +2,13 @@
 -behaviour(gen_server).
 -vsn("0.0.1").
 
+-include("ecache.hrl").
+
 % gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
 % API
 -export([start_link/2, stop/1, get/1, get/2, set/2, set/3, delete/1, delete/2, stats/1, stats/0]).
-
-% records
-%-record(value, {
-%	data		= <<>> :: binary(),
-%	timestamp	= 0    :: integer()
-%}).
 
 -record(state, {
 	cherly          = <<>>          ,
@@ -21,18 +17,8 @@
 	stats_set_op	= 0 :: integer(),
 	stats_del_op	= 0 :: integer(),
 	stats_hit       = 0 :: integer()
-%	stats_rec_num	= 0 :: integer(),
-%	stats_rec_size	= 0 :: integer()
 }).
 
--record(stats, {
-	get_op	 = 0 :: integer(),
-	set_op	 = 0 :: integer(),
-	del_op	 = 0 :: integer(),
-	hit_cnt	 = 0 :: integer(),
-	rec_num	 = 0 :: integer(),
-	rec_size = 0 :: integer()
-}).
 % ============================ API ============================================
 % Function: {ok,Pid} | ignore | {error, Error}
 % Description: Starts the server.
