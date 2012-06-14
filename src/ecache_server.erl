@@ -47,7 +47,12 @@ set(Id, Key, Value) when is_atom(Value) ->
 	NewVal = atom_to_binary(Value, latin1),
 	set(Id, Key, NewVal);
 set(Id, Key, Value) when is_binary(Value) ->
-	gen_server:call(Id, {set, Key, Value}).
+	case size(Value) < 1000000 of
+		true ->
+			gen_server:call(Id, {set, Key, Value});
+		false ->
+			nop
+	end.
 
 set(Key, Value) ->
 	Id = ecache_sup:get_server_id(Key),
