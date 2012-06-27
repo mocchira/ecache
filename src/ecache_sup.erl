@@ -19,21 +19,23 @@
 %% @spec (Params) -> ok
 %% @doc start link.
 %% @end
-start_link(Options) ->
+start_link(_Options) ->
 	OptionProps = [
                 {proc_num, 8, fun is_integer/1, proc_num_not_integer},
                 {rec_max_size, 1024 * 1024 * 1024, fun is_integer/1, rec_max_size_not_integer}
         ],
-        OptionsVerified = lists:foldl(fun(OptionName, Acc) -> [get_option(OptionName, Options)|Acc] end, [], OptionProps),
+        %OptionsVerified = lists:foldl(fun(OptionName, Acc) -> [get_option(OptionName, Options)|Acc] end, [], OptionProps),
+        OptionsVerified = lists:foldl(fun(OptionName, Acc) -> [get_option(OptionName)|Acc] end, [], OptionProps),
         case proplists:get_value(error, OptionsVerified) of
                 undefined ->
-                        % ok, no error found in options
-                        ProcNum = proplists:get_value(proc_num    , OptionsVerified),
-                        MaxSize = round(proplists:get_value(rec_max_size, OptionsVerified) / ProcNum),
-    			        supervisor:start_link({local, ?MODULE}, ?MODULE, [ProcNum, MaxSize]);
+                    % ok, no error found in options
+                    ProcNum = proplists:get_value(proc_num    , OptionsVerified),
+                    MaxSize = round(proplists:get_value(rec_max_size, OptionsVerified) / ProcNum),
+                    io:format("proc:~p size:~p~n",[ProcNum, MaxSize]),
+                    supervisor:start_link({local, ?MODULE}, ?MODULE, [ProcNum, MaxSize]);
                 Reason ->
-                        % error found in options
-                        {error, Reason}
+                    % error found in options
+                    {error, Reason}
         end.
 
 %% @spec () -> ok |
@@ -101,8 +103,8 @@ init([ProcNum|Args]) ->
 
 % ============================ INTERNAL FUNCTIONS ==============================
 % Description: Validate and get misultin options.
-get_option({OptionName, DefaultValue, CheckAndConvertFun, FailTypeError}, Options) ->
-        case proplists:get_value(OptionName, Options) of
+get_option({OptionName, DefaultValue, CheckAndConvertFun, FailTypeError}) ->
+        case application:get_env(OptionName) of
                 undefined ->
                         case DefaultValue of
                                 {error, Reason} ->
@@ -110,7 +112,7 @@ get_option({OptionName, DefaultValue, CheckAndConvertFun, FailTypeError}, Option
                                 Value ->
                                         {OptionName, Value}
                         end;
-                Value ->
+                {ok, Value} ->
                         case CheckAndConvertFun(Value) of
                                 false ->
                                         {error, {FailTypeError, Value}};
